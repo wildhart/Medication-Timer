@@ -1,0 +1,26 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "cmorison@gmail.com",
+    "longName": "Medication Timer",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/icons.png",
+                "name": "IMAGE_ICON_MATRIX",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "Medication Timer",
+    "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
