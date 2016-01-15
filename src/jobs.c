@@ -274,9 +274,11 @@ char* jobs_get_job_repeat_as_text(uint8_t index) {
   return repeat_buffer;
 }
 
-void jobs_reset_and_save(uint8_t index) {
-  jobs_list_get_index(index)->Seconds=time(NULL);
+void jobs_reset_and_save(uint8_t *index) {
+  Job* job=jobs_list_get_index(*index);
+  job->Seconds=time(NULL);
   main_save_data();
+  jobs_update_job_index(job, index);
 }
 
 void jobs_add_minutes(uint8_t *index, int minutes) {
@@ -288,8 +290,6 @@ void jobs_add_minutes(uint8_t *index, int minutes) {
     seconds = time(NULL);
   }
   job->Seconds = seconds;
-  main_save_data();
-  jobs_update_job_index(job, index);
 }
 
 time_t jobs_get_next_wakeup_time(void) {

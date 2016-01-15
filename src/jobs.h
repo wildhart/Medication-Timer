@@ -17,7 +17,7 @@ void jobs_set_job_repeat(uint8_t *index, uint8_t repeat);
 char* jobs_get_job_name(uint8_t index);
 char* jobs_get_job_clock_as_text(uint8_t index);
 char* jobs_get_job_repeat_as_text(uint8_t index);
-void jobs_reset_and_save(uint8_t index);
+void jobs_reset_and_save(uint8_t *index);
 void jobs_add_minutes(uint8_t *index, int minutes);
 time_t jobs_get_next_wakeup_time(void);
 void jobs_check_alarms(void);

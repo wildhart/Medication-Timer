@@ -1,6 +1,7 @@
 #include "main.h"
 
 uint8_t job_index;
+bool job_changed;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -63,15 +64,17 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
 static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
   switch (cell_index->row) {
     case MENU_RESET: 
-      jobs_reset_and_save(job_index);
+      jobs_reset_and_save(&job_index);
       job_menu_hide();
       break;
     case MENU_ADD10:
       jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? 10:-10); // this updates job_index incase it gets sorted
+      job_changed=true;
       menu_layer_reload_data(s_menulayer);
       break;
     case MENU_SUB10:
       jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? -10:10); // this updates job_index incase it gets sorted
+      job_changed=true;
       menu_layer_reload_data(s_menulayer);
       break;
     case MENU_RENAME: jobs_rename_job(job_index); break;
@@ -90,10 +93,14 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
 static void handle_window_unload(Window* window) {
   destroy_ui();
   s_window=NULL;
+  if (job_changed) {
+    main_save_data();
+  }
 }
 
 void job_menu_show(uint8_t index) {
   job_index=index;
+  job_changed=false;
   initialise_ui();
   window_set_window_handlers(s_window, (WindowHandlers) {
     .unload = handle_window_unload,

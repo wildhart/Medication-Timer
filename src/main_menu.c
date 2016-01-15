@@ -167,7 +167,7 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
 }
 
 static void menu_select_long_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
-  if (cell_index->section == MENU_SECTION_JOBS) jobs_reset_and_save(cell_index->row);
+  if (cell_index->section == MENU_SECTION_JOBS) jobs_reset_and_save((uint8_t*) &(cell_index->row));
 }
 
 // *****************************************************************************************************
