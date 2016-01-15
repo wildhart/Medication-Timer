@@ -7,7 +7,7 @@
 #include "job_adjust.h"
 #include "tertiary_text.h"
 
-#define DISABLE_LOGGING false
+#define DISABLE_LOGGING true
 
 #if DISABLE_LOGGING
 #define LOG(...)
@@ -29,6 +29,8 @@
 #define MENU_SECTION_CELL  (cell_index->section * 100 + cell_index->row)
 #define MENU_HEIGHT_SINGLE 28
 #define MENU_HEIGHT_DOUBLE 42
+
+#define END_TIME(JOB) ((time_t) (JOB)->Seconds + (time_t) (JOB)->Repeat_hrs*3600)
 
 #define FONT_GOTHIC_24_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD)
 #define FONT_GOTHIC_18_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
@@ -55,8 +57,8 @@
 #define ICON_RECT_CLOCK       (GRect) { { 32, 16 }, { 16, 16 } }
 
 extern GBitmap *bitmap_matrix;
-extern GBitmap *bitmap_pause;
-extern GBitmap *bitmap_play;
+//extern GBitmap *bitmap_pause;
+//extern GBitmap *bitmap_play;
 extern GBitmap *bitmap_add;
 //extern GBitmap *bitmap_settings;
 extern GBitmap *bitmap_delete;
@@ -68,10 +70,23 @@ extern GBitmap *bitmap_tick;
 
 // Persistent Storage Keys
 #define STORAGE_KEY_VERSION    1
-#define STORAGE_KEY_TIMER      NO LONGER USED
-//#define STORAGE_KEY_SETTINGS   NO LONGER USED
-#define STORAGE_KEY_FIRST_JOB 100
+#define STORAGE_KEY_SETTINGS   2
+#define STORAGE_KEY_FIRST_MED  100
 
 #define CURRENT_STORAGE_VERSION 1
+
+typedef struct {
+  uint8_t Mode;
+  bool Alarm;
+  bool Sort;
+} Settings;
+
+extern Settings settings;
+
+enum {
+  MODE_COUNT_UP,
+  MODE_COUNT_DOWN,
+  MODE_NEXT_TIME
+};
 
 void main_save_data(void);

@@ -7,3 +7,4 @@ void main_menu_show(void);
 void main_menu_hide(void);
 void main_menu_update(void);
 void main_menu_toggle_clock(void);
+void main_menu_highlight_top(void);

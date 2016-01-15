@@ -64,18 +64,18 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
   switch (cell_index->row) {
     case MENU_RESET: 
       jobs_reset_and_save(job_index);
-      menu_layer_reload_data(s_menulayer);
+      job_menu_hide();
       break;
     case MENU_ADD10:
-      jobs_add_minutes(job_index, -10); 
+      jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? 10:-10); // this updates job_index incase it gets sorted
       menu_layer_reload_data(s_menulayer);
       break;
     case MENU_SUB10:
-      jobs_add_minutes(job_index, 10); 
+      jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? -10:10); // this updates job_index incase it gets sorted
       menu_layer_reload_data(s_menulayer);
       break;
     case MENU_RENAME: jobs_rename_job(job_index); break;
-    case MENU_ADJUST: job_adjust_show(job_index); break;
+    case MENU_ADJUST: job_adjust_show(); break;
     case MENU_DELETE: 
       jobs_delete_job_and_save(job_index);
       job_menu_hide();

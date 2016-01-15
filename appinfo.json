@@ -1,13 +1,24 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "KEY_ALARM": 2,
+        "KEY_MEDICATIONS": 100,
+        "KEY_MODE": 1,
+        "KEY_SORT": 3
+    },
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "cmorison@gmail.com",
     "longName": "Medication Timer",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/menu_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON",
+                "type": "png"
+            },
             {
                 "file": "images/icons.png",
                 "name": "IMAGE_ICON_MATRIX",
@@ -16,7 +27,7 @@
         ]
     },
     "sdkVersion": "2",
-    "shortName": "Medication Timer",
+    "shortName": "Meds Timer",
     "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
     "versionCode": 1,
     "versionLabel": "1.0",
