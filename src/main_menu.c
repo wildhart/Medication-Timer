@@ -94,7 +94,7 @@ void menu_cell_draw_job(GContext* ctx, const Layer *cell_layer, const uint8_t in
   graphics_context_set_text_color(ctx, GColorBlack);
   graphics_draw_text(ctx, jobs_get_job_name(index), FONT_GOTHIC_24_BOLD, GRect(4, -4, bounds.size.w-8, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
   graphics_draw_text(ctx, jobs_get_job_clock_as_text(index), FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentRight, NULL);
-  graphics_draw_text(ctx, jobs_get_job_repeat_as_text(index), FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, jobs_get_job_repeat_as_text(index), FONT_GOTHIC_14, GRect(4, 20+4, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
 
   //graphics_draw_bitmap_in_rect(ctx, timer.Active && timer.Job==index ? bitmap_play : bitmap_pause, GRect(6, (bounds.size.h-16)/2, 16, 16));
 }
@@ -167,7 +167,10 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
 }
 
 static void menu_select_long_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
-  if (cell_index->section == MENU_SECTION_JOBS) jobs_reset_and_save((uint8_t*) &(cell_index->row));
+  if (cell_index->section == MENU_SECTION_JOBS) {
+    uint8_t row=cell_index->row; 
+    jobs_reset_and_save(&row); // pass a copy of the variable otherwise the selected menu option is updated when the medication moves
+  }
 }
 
 // *****************************************************************************************************

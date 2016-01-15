@@ -5,9 +5,10 @@
 #include "main_menu.h"
 #include "job_menu.h"
 #include "job_adjust.h"
+#include "update.h"
 #include "tertiary_text.h"
 
-#define DISABLE_LOGGING true
+#define DISABLE_LOGGING false
 
 #if DISABLE_LOGGING
 #define LOG(...)
@@ -36,6 +37,7 @@
 #define FONT_GOTHIC_18_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
 #define FONT_GOTHIC_14_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD)
 #define FONT_GOTHIC_18                fonts_get_system_font(FONT_KEY_GOTHIC_18)
+#define FONT_GOTHIC_14                fonts_get_system_font(FONT_KEY_GOTHIC_14)
 #define FONT_BITHAM_30_BLACK          fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK)
 #define FONT_BITHAM_34_MEDIUM_NUMBERS fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS)
 
@@ -58,7 +60,7 @@
 
 extern GBitmap *bitmap_matrix;
 //extern GBitmap *bitmap_pause;
-//extern GBitmap *bitmap_play;
+extern GBitmap *bitmap_play;
 extern GBitmap *bitmap_add;
 //extern GBitmap *bitmap_settings;
 extern GBitmap *bitmap_delete;
@@ -73,7 +75,8 @@ extern GBitmap *bitmap_tick;
 #define STORAGE_KEY_SETTINGS   2
 #define STORAGE_KEY_FIRST_MED  100
 
-#define CURRENT_STORAGE_VERSION 1
+#define CURRENT_STORAGE_VERSION 2
+//changes in storage version: 2 added bool Fixed to end of every Job struct
 
 typedef struct {
   uint8_t Mode;

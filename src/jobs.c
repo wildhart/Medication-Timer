@@ -5,6 +5,7 @@ typedef struct {
   char Name[JOB_NAME_LENGTH];
   time_t Seconds;
   uint8_t Repeat_hrs;
+  bool Fixed;
 } Job;
 
 typedef struct Job_ptr {
@@ -19,7 +20,7 @@ uint8_t jobs_count=0;
 // JOB LIST FUNCTIONS
 // *****************************************************************************************************
 
-static void jobs_list_append_job(const char* name, time_t seconds, uint8_t repeat) {
+static void jobs_list_append_job(const char* name, time_t seconds, uint8_t repeat, int fixed) {
   Job* new_job = malloc(sizeof(Job));
   Job_ptr* new_job_ptr = malloc(sizeof(Job_ptr));
   
@@ -28,6 +29,7 @@ static void jobs_list_append_job(const char* name, time_t seconds, uint8_t repea
   strncpy(new_job->Name, name, JOB_NAME_LENGTH);
   new_job->Seconds = seconds;
   new_job->Repeat_hrs = repeat;
+  new_job->Fixed = fixed ? true : false;
     
   if (first_job_ptr) {
     Job_ptr* last_job_ptr = first_job_ptr;
@@ -36,6 +38,7 @@ static void jobs_list_append_job(const char* name, time_t seconds, uint8_t repea
   } else {
     first_job_ptr = new_job_ptr;
   }
+  LOG("appended job: %s, seconds=%ld, repeat=%d, fixed=%d", new_job->Name, new_job->Seconds, new_job->Repeat_hrs, new_job->Fixed);
   jobs_count++;
   main_save_data();
 }
@@ -84,21 +87,22 @@ void jobs_list_write_dict(DictionaryIterator *iter, uint8_t first_key) {
   char buffer[JOB_NAME_LENGTH+30];
   while (job_ptr) {
     job=job_ptr->Job;
-    snprintf(buffer,JOB_NAME_LENGTH+30,"%s|%ld|%u",job->Name, job->Seconds, job->Repeat_hrs);
+    snprintf(buffer,JOB_NAME_LENGTH+30,"%s|%ld|%u|%d",job->Name, job->Seconds, job->Repeat_hrs, job->Fixed ? 1:0);
     dict_write_cstring(iter, first_key++, buffer);
     job_ptr=job_ptr->Next_ptr;
   }
 }
 
-void jobs_list_read_dict(DictionaryIterator *iter, uint8_t first_key) {
+void jobs_list_read_dict(DictionaryIterator *iter, uint8_t first_key, const uint8_t version) {
   if (first_job_ptr!=NULL) return;
   
   Tuple *tuple_t;
-  char buffer[3][JOB_NAME_LENGTH];
+  uint8_t fields=4;
+  char buffer[fields][JOB_NAME_LENGTH];
   
   while ((tuple_t=dict_find(iter, first_key++))) {
     char *source = tuple_t->value->cstring;
-    for (int c=0; c<3; c++) {
+    for (int c=0; c<fields; c++) {
       uint d=0; // destination offset
       while (*source && *source!='|' && d<JOB_NAME_LENGTH) {
         buffer[c][d++]=*source++;
@@ -107,13 +111,13 @@ void jobs_list_read_dict(DictionaryIterator *iter, uint8_t first_key) {
       buffer[c][d]=0;
       source++;
     }
-    jobs_list_append_job(buffer[0], atoi(buffer[1]), atoi(buffer[2]));
+    jobs_list_append_job(buffer[0], atoi(buffer[1]), atoi(buffer[2]), atoi(buffer[3]));
   }
 }
 
 void jobs_list_load2(uint8_t first_key, const uint8_t version) {
-  jobs_list_append_job("Paracetamol",time(NULL),0);
-  jobs_list_append_job("Ibuprofin",time(NULL),0);
+  jobs_list_append_job("Paracetamol",time(NULL),0,0);
+  jobs_list_append_job("Ibuprofin",time(NULL),0,0);
 }
 
 void jobs_list_load(uint8_t first_key, const uint8_t version) {
@@ -124,7 +128,9 @@ void jobs_list_load(uint8_t first_key, const uint8_t version) {
   while (persist_exists(first_key)) {
     new_job = malloc(sizeof(Job));
     persist_read_data(first_key, new_job, sizeof(Job));
+    if (version<2) new_job->Fixed = false; // this flag was not included before storage version 2
     
+    LOG("loaded job: %s, seconds=%ld, repeat=%d, fixed=%d, version=%d", new_job->Name, new_job->Seconds, new_job->Repeat_hrs, new_job->Fixed, version);
     new_job_ptr = malloc(sizeof(Job_ptr));
     new_job_ptr->Job = new_job;
     new_job_ptr->Next_ptr = NULL;
@@ -167,7 +173,7 @@ static void callback(const char* result, size_t result_length, void* extra) {
 	// Do something with result
   int index = (int) extra;
   if (index==-1) {
-    jobs_list_append_job(result, time(NULL), 0);  
+    jobs_list_append_job(result, time(NULL), 0, 0);  
   } else {
     snprintf(jobs_list_get_index(index)->Name,JOB_NAME_LENGTH, result);
     main_save_data();
@@ -221,6 +227,10 @@ uint8_t jobs_get_job_repeat(uint8_t index) {
   return (job) ? job->Repeat_hrs : 0;
 }
 
+bool jobs_get_job_fixed(uint8_t index) {
+  Job* job=jobs_list_get_index(index);
+  return (job) ? job->Fixed : 0;
+}
 static void jobs_update_job_index(Job* job, uint8_t *index) {
   // check if job was moved during sort
   if (job==jobs_list_get_index(*index)) return;
@@ -233,11 +243,14 @@ static void jobs_update_job_index(Job* job, uint8_t *index) {
   }
 }
 
-void jobs_set_job_repeat(uint8_t *index, uint8_t repeat) {
+void jobs_set_job_repeat(uint8_t *index, uint8_t repeat, uint8_t fixed) {
   Job* job=jobs_list_get_index(*index);
-  if (job) job->Repeat_hrs=repeat;
-  main_save_data();
-  jobs_update_job_index(job, index);
+  if (job) {
+    job->Repeat_hrs=repeat;
+    job->Fixed = fixed ? true : false;
+    main_save_data();
+    jobs_update_job_index(job, index);
+  }
 }
 
 #define MAX_CLOCK_LENGTH 24
@@ -268,15 +281,19 @@ char* jobs_get_job_clock_as_text(uint8_t index) {
 }
 
 char* jobs_get_job_repeat_as_text(uint8_t index) {
-  int repeat = jobs_get_job_repeat(index);
+  Job* job=jobs_list_get_index(index);
   
-  snprintf(repeat_buffer,MAX_CLOCK_LENGTH,"every %d hrs", repeat);
+  snprintf(repeat_buffer,MAX_CLOCK_LENGTH,"Every %d%s hrs", job->Repeat_hrs, job->Fixed ? "" : "+");
   return repeat_buffer;
 }
 
 void jobs_reset_and_save(uint8_t *index) {
   Job* job=jobs_list_get_index(*index);
-  job->Seconds=time(NULL);
+  if (job->Fixed) {
+    job->Seconds+=job->Repeat_hrs*3600; 
+  } else {
+    job->Seconds=time(NULL);
+  }
   main_save_data();
   jobs_update_job_index(job, index);
 }

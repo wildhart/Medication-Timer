@@ -86,6 +86,21 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
   }
 }
 
+static void menu_select_long_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
+  switch (cell_index->row) {
+    case MENU_ADD10:
+      jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? 1:-1); // this updates job_index incase it gets sorted
+      job_changed=true;
+      menu_layer_reload_data(s_menulayer);
+      break;
+    case MENU_SUB10:
+      jobs_add_minutes(&job_index, (settings.Mode==MODE_NEXT_TIME) ? -1:1); // this updates job_index incase it gets sorted
+      job_changed=true;
+      menu_layer_reload_data(s_menulayer);
+      break;
+  }
+}
+
 // *****************************************************************************************************
 // MAIN
 // *****************************************************************************************************
@@ -114,7 +129,7 @@ void job_menu_show(uint8_t index) {
     .draw_header = NULL, //menu_draw_header_callback,
     .draw_row = menu_draw_row_callback,
     .select_click = menu_select_callback,
-    .select_long_click = NULL //menu_select_long_callback
+    .select_long_click = menu_select_long_callback
   });
   window_stack_push(s_window, true);
 }
