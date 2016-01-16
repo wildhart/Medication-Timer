@@ -8,7 +8,7 @@
 #include "update.h"
 #include "tertiary_text.h"
 
-#define DISABLE_LOGGING false
+#define DISABLE_LOGGING true
 
 #if DISABLE_LOGGING
 #define LOG(...)

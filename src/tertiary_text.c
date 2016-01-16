@@ -1,5 +1,5 @@
 #include "tertiary_text.h"
- 
+
 // Max text limit in characters
 // You may adjust this to allow longer messages
 #define MAX_CHARS 60
@@ -20,7 +20,7 @@ static TextLayer* buttons2[3];
 static TextLayer* buttons3[3];
 static TextLayer** bbuttons[3];
 
-static InverterLayer* inverter_side;
+static TextLayer* inverter_side;
 
 static bool menu = false;
 
@@ -296,27 +296,27 @@ static void initSidesAndText()
     text_layer_set_background_color(text_input, GColorClear);
     text_layer_set_font(text_input, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     layer_add_child(window_layer, text_layer_get_layer(text_input));
-    
-		// Create a text layer for the help
+
+    // Create a text layer for the help
 		text_help = text_layer_create( GRect( 5, bounds.size.h-44-5, 100, 50 ) );
 		text_layer_set_font( text_help, fonts_get_system_font( FONT_KEY_GOTHIC_14 ) );
 		text_layer_set_text( text_help, "Hold TOP: Case\nHold MID: Done\nHold BOT: Delete" );
 		layer_add_child( window_layer, text_layer_get_layer( text_help ) );
-    
-    for (int i = 0; i<3; i++)
-    {
-        buttons1[i] = text_layer_create((GRect) { .origin = { 115, 12*i }, .size = { 100, 100 } });
-        buttons2[i] = text_layer_create((GRect) { .origin = { 115, 12*i+50 }, .size = { 100, 100 } });
-        buttons3[i] = text_layer_create((GRect) { .origin = { 115, 12*i+100 }, .size = { 100, 100 } });
+  
+		// Side inverter
+		inverter_side = text_layer_create( GRect( 110, 0, 34, 169 ) );
+    text_layer_set_background_color(inverter_side, GColorBlack);
+		layer_add_child( window_layer, text_layer_get_layer( inverter_side ) );
+
+    for (int i = 0; i<3; i++) {
+        for( int j=0; j<3; j++ ) {
+            bbuttons[j][i] = text_layer_create(GRect(115, 12*i+50*j, 100, 100));
+            text_layer_set_background_color( bbuttons[j][i], GColorBlack);
+            text_layer_set_text_color(bbuttons[j][i], GColorWhite);
+            layer_add_child( window_layer, text_layer_get_layer( bbuttons[j][i] ) );
+        }
     }
 
-    for( int i=0; i<3; i++ )
-        for( int j=0; j<3; j++ )
-            layer_add_child( window_layer, text_layer_get_layer( bbuttons[i][j] ) );
-    
-		// Side inverter
-		inverter_side = inverter_layer_create( GRect( 110, 0, 34, 169 ) );
-		layer_add_child( window_layer, inverter_layer_get_layer( inverter_side ) );
 }
 
 static void drawNotepadText()
@@ -331,7 +331,7 @@ static void window_unload(Window *window)
 	text_layer_destroy(text_title);
 	text_layer_destroy(text_help);
 	
-	inverter_layer_destroy( inverter_side );
+	text_layer_destroy( inverter_side );
 
     for( int i=0; i<3; i++ )
         for( int j=0; j<3; j++ )
