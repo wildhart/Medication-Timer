@@ -62,7 +62,7 @@ extern GBitmap *bitmap_matrix;
 //extern GBitmap *bitmap_pause;
 extern GBitmap *bitmap_play;
 extern GBitmap *bitmap_add;
-//extern GBitmap *bitmap_settings;
+extern GBitmap *bitmap_settings;
 extern GBitmap *bitmap_delete;
 extern GBitmap *bitmap_edit;
 extern GBitmap *bitmap_adjust;
@@ -75,8 +75,9 @@ extern GBitmap *bitmap_tick;
 #define STORAGE_KEY_SETTINGS   2
 #define STORAGE_KEY_FIRST_MED  100
 
-#define CURRENT_STORAGE_VERSION 2
+#define CURRENT_STORAGE_VERSION 3
 //changes in storage version: 2 added bool Fixed to end of every Job struct
+//changes in storage version: 3 configuration
 
 typedef struct {
   uint8_t Mode;
@@ -85,6 +86,7 @@ typedef struct {
 } Settings;
 
 extern Settings settings;
+extern bool export_after_save;
 
 enum {
   MODE_COUNT_UP,

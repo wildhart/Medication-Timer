@@ -1,6 +1,9 @@
 {
     "appKeys": {
         "KEY_ALARM": 2,
+        "KEY_APP_VERSION": 5,
+        "KEY_CONFIG_DATA": 0,
+        "KEY_EXPORT": 6,
         "KEY_MEDICATIONS": 100,
         "KEY_MODE": 1,
         "KEY_SORT": 3,
@@ -31,7 +34,7 @@
     "shortName": "Meds Timer",
     "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
     "versionCode": 1,
-    "versionLabel": "1.1",
+    "versionLabel": "1.2",
     "watchapp": {
         "watchface": false
     }

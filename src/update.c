@@ -15,7 +15,7 @@ static void initialise_ui(void) {
   #endif
   
   s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
-  s_res_gothic_14 = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  s_res_gothic_14 = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   // s_textlayer_heading
   s_textlayer_heading = text_layer_create(GRect(2, -1, 140, 28));
   text_layer_set_text(s_textlayer_heading, "New Feature:");
@@ -24,7 +24,7 @@ static void initialise_ui(void) {
   
   // s_textlayer_features
   s_textlayer_features = text_layer_create(GRect(2, 27, 140, 125));
-  text_layer_set_text(s_textlayer_features, "* Medications can have FIXED time periods (timer starts from when pill SHOULD have been taken) or FLEXIBLE periods (timer starts from when pill was actually taken.");
+  text_layer_set_text(s_textlayer_features, "* Configuration page for easier medication entry.\n\n * DONATIONS can be accepted from the config page!");
   text_layer_set_font(s_textlayer_features, s_res_gothic_14);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_features);
 }

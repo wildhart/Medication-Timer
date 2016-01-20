@@ -8,6 +8,7 @@ void jobs_list_load(uint8_t first_key, const uint8_t version);
 void jobs_list_write_dict(DictionaryIterator *iter, uint8_t first_key);
 void jobs_list_read_dict(DictionaryIterator *iter, uint8_t first_key, const uint8_t version);
 
+void jobs_delete_all_jobs(void);
 void jobs_delete_job_and_save(uint8_t index);
 void jobs_add_job();
 void jobs_rename_job(uint8_t index);

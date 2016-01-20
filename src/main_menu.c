@@ -48,7 +48,8 @@ enum { // main menu structure
   MENU_SETTINGS_MODE=MENU_SECTION_SETTINGS*100,
   MENU_SETTINGS_ALARM,
   MENU_SETTINGS_SORT,
-  NUM_MENU_ITEMS_SETTINGS=3
+  MENU_SETTINGS_CONFIG,
+  NUM_MENU_ITEMS_SETTINGS=4
 };
 
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
@@ -133,6 +134,7 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
           break;
         case MENU_SETTINGS_ALARM: menu_cell_draw_setting(ctx, cell_layer, "Alarm", settings.Alarm ? "YES" : "NO",NULL); break;
         case MENU_SETTINGS_SORT: menu_cell_draw_setting(ctx, cell_layer, "Sort", settings.Sort ? "YES" : "NO",NULL); break;
+        case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, "Config/Donate", NULL , bitmap_settings); break;
       }
   }
 }
@@ -141,26 +143,28 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
   switch (cell_index->section) {
     case MENU_SECTION_JOBS:
       job_menu_show(cell_index->row);
-      //jobs_reset_and_save(cell_index->row);
-      //menu_layer_reload_data(s_menulayer);
       break;
     default:
       switch (MENU_SECTION_CELL) {
         case MENU_OTHER_ADD: jobs_add_job(); break;
         case MENU_SETTINGS_MODE:
           settings.Mode = (settings.Mode + 1) % 3;
-          main_save_data();
           menu_layer_reload_data(s_menulayer);
+          main_save_data();
           break;
         case MENU_SETTINGS_ALARM:
           settings.Alarm = !settings.Alarm;
-          main_save_data();
           menu_layer_reload_data(s_menulayer);
+          main_save_data();
           break;
         case MENU_SETTINGS_SORT: 
           settings.Sort = !settings.Sort;
           main_save_data();
           menu_layer_reload_data(s_menulayer);
+          break;
+        case MENU_SETTINGS_CONFIG:
+          export_after_save=true;
+          main_save_data();
           break;
       }
   }

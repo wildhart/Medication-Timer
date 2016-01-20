@@ -80,7 +80,7 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_actionbarlayer);
   
   // s_textlayer_name
-  s_textlayer_name = text_layer_create(GRect(5, 7, 100, 24));
+  s_textlayer_name = text_layer_create(GRect(5, 7, 100, 30));
   text_layer_set_font(s_textlayer_name, s_res_gothic_24_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_name);
   

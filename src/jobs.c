@@ -40,7 +40,6 @@ static void jobs_list_append_job(const char* name, time_t seconds, uint8_t repea
   }
   LOG("appended job: %s, seconds=%ld, repeat=%d, fixed=%d", new_job->Name, new_job->Seconds, new_job->Repeat_hrs, new_job->Fixed);
   jobs_count++;
-  main_save_data();
 }
 
 void jobs_list_sort(void) {
@@ -176,8 +175,8 @@ static void callback(const char* result, size_t result_length, void* extra) {
     jobs_list_append_job(result, time(NULL), 0, 0);  
   } else {
     snprintf(jobs_list_get_index(index)->Name,JOB_NAME_LENGTH, result);
-    main_save_data();
   }
+  main_save_data();
   main_menu_update();
 }
 
@@ -187,6 +186,17 @@ void jobs_add_job() {
 
 void jobs_rename_job(uint8_t index) {
   tertiary_text_prompt(jobs_get_job_name(index), callback, (void*) (int) index);
+}
+
+void jobs_delete_all_jobs(void) {
+  Job_ptr* job_ptr = first_job_ptr;
+  while (first_job_ptr) {
+    Job_ptr * next_job=first_job_ptr->Next_ptr;
+    free(first_job_ptr->Job);
+    free(first_job_ptr);
+    first_job_ptr=next_job;
+  }
+  jobs_count=0;
 }
 
 void jobs_delete_job_and_save(uint8_t index) {
