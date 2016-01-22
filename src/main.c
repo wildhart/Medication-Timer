@@ -38,6 +38,30 @@ bool export_after_save=false;
 #define KEY_EXPORT        6
 #define KEY_TIMESTAMP     7
 
+static void send_settings_to_phone() {
+  if (!JS_ready) return;
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  int dummy_int;
+  
+  dict_write_cstring(iter, KEY_APP_VERSION, app_version);
+  dummy_int=CURRENT_STORAGE_VERSION;   dict_write_int(iter, KEY_VERSION, &dummy_int, sizeof(int), true);
+  dummy_int=data_timestamp;          dict_write_int(iter, KEY_TIMESTAMP, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Mode;   dict_write_int(iter, KEY_MODE, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Alarm;  dict_write_int(iter, KEY_ALARM, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Sort;   dict_write_int(iter, KEY_SORT, &dummy_int, sizeof(int), true);
+  jobs_list_write_dict(iter, KEY_MEDICATIONS);
+
+  if (export_after_save) {
+    dummy_int=true;
+    dict_write_int(iter, KEY_EXPORT, &dummy_int, sizeof(int), true);
+    export_after_save=false;
+  }
+
+  dict_write_end(iter);
+  app_message_outbox_send();
+}
+
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   LOG("Inbox received...");
   JS_ready = true;
@@ -62,33 +86,11 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     }
     main_save_data();
     main_menu_highlight_top();
+  } else if (inbox_timestamp < data_timestamp) {
+    send_settings_to_phone();
   }
   
   LOG("Inbox processed.");
-}
-
-static void send_settings_to_phone() {
-  if (!JS_ready) return;
-  DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
-  int dummy_int;
-  
-  dict_write_cstring(iter, KEY_APP_VERSION, app_version);
-  dummy_int=CURRENT_STORAGE_VERSION;   dict_write_int(iter, KEY_VERSION, &dummy_int, sizeof(int), true);
-  dummy_int=data_timestamp;          dict_write_int(iter, KEY_TIMESTAMP, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Mode;   dict_write_int(iter, KEY_MODE, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Alarm;  dict_write_int(iter, KEY_ALARM, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Sort;   dict_write_int(iter, KEY_SORT, &dummy_int, sizeof(int), true);
-  jobs_list_write_dict(iter, KEY_MEDICATIONS);
-
-  if (export_after_save) {
-    dummy_int=true;
-    dict_write_int(iter, KEY_EXPORT, &dummy_int, sizeof(int), true);
-    export_after_save=false;
-  }
-
-  dict_write_end(iter);
-  app_message_outbox_send();
 }
 
 // *****************************************************************************************************
