@@ -20,6 +20,7 @@ GBitmap *bitmap_tick;
 Settings settings={MODE_COUNT_UP, false /*alarm*/, true /*sort*/};
 static bool JS_ready = false;
 static bool data_loaded_from_watch = false;
+static uint32_t data_timestamp = 0;
 uint8_t stored_version=0;
 bool export_after_save=false;
 
@@ -35,16 +36,19 @@ bool export_after_save=false;
 #define KEY_VERSION       4
 #define KEY_APP_VERSION   5
 #define KEY_EXPORT        6
+#define KEY_TIMESTAMP     7
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   LOG("Inbox received...");
   JS_ready = true;
   Tuple *tuple_t;
-  
   bool new_data_from_config_page = dict_find(iter, KEY_CONFIG_DATA);
+  tuple_t= dict_find(iter, KEY_TIMESTAMP);
+  uint32_t inbox_timestamp = tuple_t ? tuple_t->value->int32 : 0;
 
-  if (!data_loaded_from_watch || new_data_from_config_page) {
+  if (new_data_from_config_page || inbox_timestamp > data_timestamp)  {
     LOG("Loading settings from phone...");
+    data_timestamp=inbox_timestamp;
     tuple_t=dict_find(iter, KEY_VERSION);  stored_version = (tuple_t) ? tuple_t->value->int32 : 1;
     tuple_t=dict_find(iter, KEY_MODE);   if (tuple_t) settings.Mode = tuple_t->value->int32;
     tuple_t=dict_find(iter, KEY_ALARM); if (tuple_t) settings.Alarm = tuple_t->value->int8 > 0; // convert int to boolean
@@ -71,6 +75,7 @@ static void send_settings_to_phone() {
   
   dict_write_cstring(iter, KEY_APP_VERSION, app_version);
   dummy_int=CURRENT_STORAGE_VERSION;   dict_write_int(iter, KEY_VERSION, &dummy_int, sizeof(int), true);
+  dummy_int=data_timestamp;          dict_write_int(iter, KEY_TIMESTAMP, &dummy_int, sizeof(int), true);
   dummy_int=settings.Mode;   dict_write_int(iter, KEY_MODE, &dummy_int, sizeof(int), true);
   dummy_int=settings.Alarm;  dict_write_int(iter, KEY_ALARM, &dummy_int, sizeof(int), true);
   dummy_int=settings.Sort;   dict_write_int(iter, KEY_SORT, &dummy_int, sizeof(int), true);
@@ -109,6 +114,8 @@ void main_wakeup_set() {
 void main_save_data(void) {
   data_loaded_from_watch = true;
   persist_write_int(STORAGE_KEY_VERSION, CURRENT_STORAGE_VERSION);
+  data_timestamp=time(NULL);
+  persist_write_int(STORAGE_KEY_TIMESTAMP, data_timestamp);
   persist_write_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));
   if (settings.Sort) jobs_list_sort();
   jobs_list_save(STORAGE_KEY_FIRST_MED);
@@ -121,6 +128,7 @@ static void main_load_data(void) {
   
   if (stored_version) {
     data_loaded_from_watch = true;
+    if (persist_exists(STORAGE_KEY_TIMESTAMP)) data_timestamp=persist_read_int(STORAGE_KEY_TIMESTAMP);
     persist_read_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));
     jobs_list_load(STORAGE_KEY_FIRST_MED, stored_version);
     if (stored_version < CURRENT_STORAGE_VERSION)  {

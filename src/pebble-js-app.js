@@ -5,6 +5,10 @@ Pebble.addEventListener('ready', function() {
   var settings=localStorage.getItem("settings");
   //settings='{"1":2,"2":1,"3":1,"4":3,"5":"1.2","100":"Ibuprofin|1453318208|12|1","101":"Omeprazole|1453275012|24|1","102":"Paracetamol|1453347465|6|0","103":"Tremadol|1453347472|8|0","104":"Zopiclone|1453330855|24|1","KEY_MODE":2,"KEY_ALARM":1,"KEY_SORT":1,"KEY_VERSION":3,"KEY_APP_VERSION":"1.2","KEY_MEDICATIONS":"Ibuprofin|1453318208|12|1"}';
   var dict=settings ? JSON.parse(settings) : {};
+  if (!dict.KEY_TIMESTAMP) { 
+    var d=new Date();
+    dict.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 - d.getTimezoneOffset()*60);
+  }
   Pebble.sendAppMessage(dict, function() {
     console.log('Send successful: ' + JSON.stringify(dict));
   }, function() {
@@ -70,12 +74,14 @@ Pebble.addEventListener('webviewclosed', function(e) {
   dict.KEY_ALARM   = configData.alarm ? 1 : 0;  // Send a boolean as an integer
   dict.KEY_SORT    = configData.sort ? 1 : 0;   // Send a boolean as an integer
   dict.KEY_VERSION = configData.data_version;
+  var d=new Date();
+  dict.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 - d.getTimezoneOffset()*60);
   
   var med=0;
   while (configData["med_"+med]) {
     var data=decodeURIComponent(configData["med_"+med]).split("|");
     var hhmm=data[1].split(":");
-    var d = new Date(); // The 0 there is the key, which sets the date to the epoch
+    d = new Date(); // The 0 there is the key, which sets the date to the epoch
     d.setHours(hhmm[0]);
     d.setMinutes(hhmm[1]);
     d.setSeconds(data[4]);

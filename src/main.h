@@ -8,7 +8,7 @@
 #include "update.h"
 #include "tertiary_text.h"
 
-#define DISABLE_LOGGING true
+#define DISABLE_LOGGING false
 
 #if DISABLE_LOGGING
 #define LOG(...)
@@ -73,6 +73,7 @@ extern GBitmap *bitmap_tick;
 // Persistent Storage Keys
 #define STORAGE_KEY_VERSION    1
 #define STORAGE_KEY_SETTINGS   2
+#define STORAGE_KEY_TIMESTAMP  3
 #define STORAGE_KEY_FIRST_MED  100
 
 #define CURRENT_STORAGE_VERSION 3
