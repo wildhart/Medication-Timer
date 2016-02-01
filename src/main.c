@@ -23,6 +23,10 @@ static bool data_loaded_from_watch = false;
 static uint32_t data_timestamp = 0;
 uint8_t stored_version=0;
 bool export_after_save=false;
+#ifdef PBL_SDK_3
+  bool waiting_for_pins=false;
+  bool quit_after_pins=false;
+#endif
 
 // *****************************************************************************************************
 // MESSAGES
@@ -37,6 +41,7 @@ bool export_after_save=false;
 #define KEY_APP_VERSION   5
 #define KEY_EXPORT        6
 #define KEY_TIMESTAMP     7
+#define KEY_PINS_DONE     8
 
 static void send_settings_to_phone() {
   if (!JS_ready) return;
@@ -60,12 +65,26 @@ static void send_settings_to_phone() {
 
   dict_write_end(iter);
   app_message_outbox_send();
+  #ifdef PBL_SDK_3
+    waiting_for_pins=true;
+  #endif
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   LOG("Inbox received...");
   JS_ready = true;
   Tuple *tuple_t;
+  
+  #ifdef PBL_SDK_3
+    if (waiting_for_pins && dict_find(iter, KEY_PINS_DONE)) {
+      waiting_for_pins=false;
+      if (quit_after_pins) {
+        main_menu_hide();
+      }
+      return;
+    }
+  #endif
+  
   bool new_data_from_config_page = dict_find(iter, KEY_CONFIG_DATA);
   tuple_t= dict_find(iter, KEY_TIMESTAMP);
   uint32_t inbox_timestamp = tuple_t ? tuple_t->value->int32 : 0;
@@ -163,9 +182,22 @@ void init(void) {
   bitmap_tick=gbitmap_create_as_sub_bitmap(bitmap_matrix, ICON_RECT_TICK);
   main_menu_show();
   if (data_loaded_from_watch && stored_version < CURRENT_STORAGE_VERSION) update_show(stored_version);
-
+  
+  
   app_message_register_inbox_received(inbox_received_handler);
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_message_open(2048, 2048);
+  
+  #ifdef PBL_SDK_3
+    if (launch_reason() == APP_LAUNCH_TIMELINE_ACTION) {
+      uint8_t reason=launch_get_args();
+      LOG("launch code: %d", reason);
+      if (reason>=10) {
+        reason-=10;
+        jobs_reset_and_save(&reason);
+        quit_after_pins=true;
+      }
+    }
+  #endif
 }
 
 void deinit(void) {

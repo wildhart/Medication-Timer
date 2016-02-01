@@ -311,11 +311,11 @@ void jobs_reset_and_save(uint8_t *index) {
 void jobs_add_minutes(uint8_t *index, int minutes) {
   Job* job=jobs_list_get_index(*index);
   int seconds = (int) job->Seconds;
-  if (seconds + 60*minutes < time(NULL)) {
+  //if (seconds + 60*minutes < time(NULL)) {
     seconds += 60*minutes;
-  } else {
-    seconds = time(NULL);
-  }
+  //} else {
+  //  seconds = time(NULL);
+  //}
   job->Seconds = seconds;
 }
 

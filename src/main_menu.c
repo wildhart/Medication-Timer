@@ -2,6 +2,41 @@
 
 static Window *s_window;
 static MenuLayer *s_menulayer;
+#ifdef PBL_SDK_3
+static StatusBarLayer *s_status_bar;
+#endif
+
+static bool check_phone_message = false;
+
+/*************************************** Back Button Override ********************************/
+// https://gist.github.com/sarfata/10574031
+#ifdef PBL_SDK_3
+// Define what you want to do when the back button is pressed
+void back_button_handler(ClickRecognizerRef recognizer, void *context) {
+  if (waiting_for_pins) {
+    quit_after_pins=true;
+  } else {
+    main_menu_hide();
+  }
+}
+
+// We need to save a reference to the ClickConfigProvider originally set by the menu layer
+ClickConfigProvider previous_ccp;
+
+// This is the new ClickConfigProvider we will set, it just calls the old one and then subscribe
+// for back button events.
+void new_ccp(void *context) {
+  previous_ccp(context);
+  window_single_click_subscribe(BUTTON_ID_BACK, back_button_handler);
+}
+
+// Call this from your init function to do the hack
+void force_back_button(Window *window, MenuLayer *menu_layer) {
+  previous_ccp = window_get_click_config_provider(window);
+  window_set_click_config_provider_with_context(window, new_ccp, menu_layer);
+}
+#endif
+/********************************* end of Back Button Override ********************************/
 
 static void initialise_ui(void) {
   s_window = window_create();
@@ -12,14 +47,27 @@ static void initialise_ui(void) {
   GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
   
   // s_menulayer
-  s_menulayer = menu_layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
+  s_menulayer = menu_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w, bounds.size.h-STATUS_BAR_LAYER_HEIGHT));
   menu_layer_set_click_config_onto_window(s_menulayer, s_window);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_menulayer);
+  #ifdef PBL_SDK_3
+    force_back_button(s_window,s_menulayer);
+  #endif
+  
+  #ifdef PBL_SDK_3
+  // Set up the status bar last to ensure it is on top of other Layers
+  s_status_bar = status_bar_layer_create();
+  layer_add_child(window_get_root_layer(s_window), status_bar_layer_get_layer(s_status_bar));
+  #endif
 }
 
 static void destroy_ui(void) {
   window_destroy(s_window);
   menu_layer_destroy(s_menulayer);
+  
+  #ifdef PBL_SDK_3
+  status_bar_layer_destroy(s_status_bar);
+  #endif
 }
 
 void handle_ticktimer_tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -91,8 +139,11 @@ static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *c
 
 void menu_cell_draw_job(GContext* ctx, const Layer *cell_layer, const uint8_t index) {
   GRect bounds = layer_get_frame(cell_layer);
-    
+  
+  #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
+  #endif
+  
   graphics_draw_text(ctx, jobs_get_job_name(index), FONT_GOTHIC_24_BOLD, GRect(4, -4, bounds.size.w-8, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
   graphics_draw_text(ctx, jobs_get_job_clock_as_text(index), FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentRight, NULL);
   graphics_draw_text(ctx, jobs_get_job_repeat_as_text(index), FONT_GOTHIC_14, GRect(4, 20+4, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
@@ -102,8 +153,11 @@ void menu_cell_draw_job(GContext* ctx, const Layer *cell_layer, const uint8_t in
 
 void menu_cell_draw_other(GContext* ctx, const Layer *cell_layer, const char *title, const char *sub_title, GBitmap * icon) {
   GRect bounds = layer_get_frame(cell_layer);
-    
+  
+  #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
+  #endif
+  
   graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(28, -4, bounds.size.w-28, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
   if (sub_title) graphics_draw_text(ctx, sub_title, FONT_GOTHIC_18, GRect(28, 20, bounds.size.w-28-4, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
 
@@ -112,8 +166,11 @@ void menu_cell_draw_other(GContext* ctx, const Layer *cell_layer, const char *ti
 
 static void menu_cell_draw_setting(GContext* ctx, const Layer *cell_layer, const char *title, const char *setting, const char *hint) {
   GRect bounds = layer_get_frame(cell_layer);
-    
+  
+  #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
+  #endif
+  
   graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(4, -4, bounds.size.w-8, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
   graphics_draw_text(ctx, setting, FONT_GOTHIC_18_BOLD, GRect(4, 2, bounds.size.w-8, 18), GTextOverflowModeFill, GTextAlignmentRight, NULL);
   graphics_draw_text(ctx, hint, FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
@@ -134,9 +191,14 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
           break;
         case MENU_SETTINGS_ALARM: menu_cell_draw_setting(ctx, cell_layer, "Alarm", settings.Alarm ? "YES" : "NO",NULL); break;
         case MENU_SETTINGS_SORT: menu_cell_draw_setting(ctx, cell_layer, "Sort", settings.Sort ? "YES" : "NO",NULL); break;
-        case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, "Config/Donate", NULL , bitmap_settings); break;
+        case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, check_phone_message ? "Check phone..." : "Config/Donate", NULL , bitmap_settings); break;
       }
   }
+}
+
+static void timer_callback(void *data) {
+    check_phone_message=false;
+    menu_layer_reload_data(s_menulayer);
 }
 
 static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
@@ -165,6 +227,9 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
         case MENU_SETTINGS_CONFIG:
           export_after_save=true;
           main_save_data();
+          check_phone_message=true;
+          menu_layer_reload_data(s_menulayer);
+          app_timer_register(2000 /* milliseconds */, timer_callback, NULL);
           break;
       }
   }

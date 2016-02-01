@@ -24,6 +24,31 @@
 #define ERROR(...) app_log(APP_LOG_LEVEL_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #endif
 
+#ifdef PBL_SDK_3
+#define PBL_IF_SDK_3(X)          (X)
+#define PBL_IF_SDK_3_ELSE(X, Y)  (X)
+  #ifdef PBL_PLATFORM_APLITE
+  #define PBL_SDK_3_APLITE                1
+  #define PBL_IF_SDK_3_APLITE_ELSE(X, Y)  (X)
+  #else
+  #define PBL_IF_SDK_3_APLITE_ELSE(X, Y)  (Y)
+  #endif
+#else // PBL_SDK_3
+  #define PBL_IF_SDK_3_APLITE_ELSE(X, Y)  (Y)
+#define PBL_IF_SDK_3(X)
+#define PBL_IF_SDK_3_ELSE(X, Y)  (Y)
+#define PBL_IF_COLOR_ELSE(X, Y)  (Y)
+#define PBL_IF_ROUND_ELSE(X, Y)  (Y)
+#define PBL_IF_BW_ELSE(X, Y)     (X)
+#define gbitmap_set_bounds(bmp, new_bounds) ((bmp)->bounds = (new_bounds))
+#define GColorLightGray          GColorBlack
+#define GColorDarkGray          GColorBlack
+#endif // PBL_SDK_3
+#define ROUND_MARGIN          PBL_IF_ROUND_ELSE(2,0)
+#ifndef STATUS_BAR_LAYER_HEIGHT
+#define STATUS_BAR_LAYER_HEIGHT  0
+#endif
+
 #define ANIMATED true
 #define HIDDEN true
 
@@ -94,5 +119,11 @@ enum {
   MODE_COUNT_DOWN,
   MODE_NEXT_TIME
 };
+
+
+#ifdef PBL_SDK_3
+  extern bool waiting_for_pins;
+  extern bool quit_after_pins;
+#endif
 
 void main_save_data(void);

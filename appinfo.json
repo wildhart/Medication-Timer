@@ -6,6 +6,7 @@
         "KEY_EXPORT": 6,
         "KEY_MEDICATIONS": 100,
         "KEY_MODE": 1,
+        "KEY_PINS_DONE": 8,
         "KEY_SORT": 3,
         "KEY_TIMESTAMP": 7,
         "KEY_VERSION": 4
@@ -31,11 +32,13 @@
             }
         ]
     },
-    "sdkVersion": "2",
+    "sdkVersion": "3",
     "shortName": "Meds Timer",
+    "targetPlatforms": [
+        "aplite"
+    ],
     "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
-    "versionCode": 1,
-    "versionLabel": "1.3",
+    "versionLabel": "1.4",
     "watchapp": {
         "watchface": false
     }

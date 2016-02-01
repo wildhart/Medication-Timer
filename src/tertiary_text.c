@@ -11,7 +11,7 @@
 static Window* window;
 
 static TextLayer* text_title;
-static TextLayer* text_layer;
+//static TextLayer* text_layer;
 static TextLayer* text_input;
 static TextLayer* text_help;
 
@@ -280,18 +280,19 @@ static void initSidesAndText()
 		// Retrieve the window layer and its bounds
     Layer *window_layer = window_get_root_layer(window); 
 		GRect bounds = layer_get_bounds(window_layer);
-	
+	/*
 		// Create a text layer for the text that is typed
     text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
     text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     layer_add_child(window_layer, text_layer_get_layer(text_layer));
-    
+  */  
 		// Create a text layer for the title
 		text_title = text_layer_create( GRect( 5, 5, 100, 30 ) );
 		text_layer_set_font( text_title, fonts_get_system_font( FONT_KEY_GOTHIC_14_BOLD ) );
 		text_layer_set_text( text_title, title );
 		layer_add_child( window_layer, text_layer_get_layer( text_title ) );
   
+		// Create a text layer for the text that is typed
     text_input = text_layer_create((GRect) { .origin = { 10, 40 }, .size = { 100, 150 } });
     text_layer_set_background_color(text_input, GColorClear);
     text_layer_set_font(text_input, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
@@ -310,13 +311,19 @@ static void initSidesAndText()
 
     for (int i = 0; i<3; i++) {
         for( int j=0; j<3; j++ ) {
-            bbuttons[j][i] = text_layer_create(GRect(115, 12*i+50*j, 100, 100));
+            bbuttons[j][i] = text_layer_create(GRect(115+PBL_IF_ROUND_ELSE(14,0), 12*i+PBL_IF_ROUND_ELSE(45,50)*j+PBL_IF_ROUND_ELSE(20,0), 100, 100));
             text_layer_set_background_color( bbuttons[j][i], GColorBlack);
             text_layer_set_text_color(bbuttons[j][i], GColorWhite);
             layer_add_child( window_layer, text_layer_get_layer( bbuttons[j][i] ) );
         }
     }
-
+                                            
+    #ifdef PBL_ROUND
+    layer_set_frame(text_layer_get_layer(text_title),GRect(31+10,28-14,125-31-10,60));
+    layer_set_frame(text_layer_get_layer(text_input),GRect(6,70-14,125-6,60));
+    layer_set_frame(text_layer_get_layer(text_help),GRect(42,121,100,50));
+    layer_set_frame(text_layer_get_layer(inverter_side),GRect(125, 0, bounds.size.w-125, bounds.size.h));
+    #endif
 }
 
 static void drawNotepadText()
@@ -326,7 +333,7 @@ static void drawNotepadText()
 
 static void window_unload(Window *window)
 {
-  text_layer_destroy(text_layer);
+  //text_layer_destroy(text_layer);
 	text_layer_destroy(text_input);
 	text_layer_destroy(text_title);
 	text_layer_destroy(text_help);

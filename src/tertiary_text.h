@@ -1,6 +1,10 @@
 #pragma once
 #include <pebble.h>
 
+#ifndef PBL_SDK_3
+#define PBL_IF_ROUND_ELSE(X, Y)  (Y)
+#endif
+
 // A callback which is called when a user submits data
 //
 // Params:
