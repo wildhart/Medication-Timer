@@ -26,6 +26,7 @@ bool export_after_save=false;
 #ifdef PBL_SDK_3
   bool waiting_for_pins=false;
   bool quit_after_pins=false;
+  uint8_t timeline_settings=TIMELINE_FLAG_ON | TIMELINE_FLAG_NOTIFICATIONS;
 #endif
 
 // *****************************************************************************************************
@@ -42,6 +43,7 @@ bool export_after_save=false;
 #define KEY_EXPORT        6
 #define KEY_TIMESTAMP     7
 #define KEY_PINS_DONE     8
+#define KEY_TIMELINE      9
 
 static void send_settings_to_phone() {
   if (!JS_ready) return;
@@ -52,9 +54,12 @@ static void send_settings_to_phone() {
   dict_write_cstring(iter, KEY_APP_VERSION, app_version);
   dummy_int=CURRENT_STORAGE_VERSION;   dict_write_int(iter, KEY_VERSION, &dummy_int, sizeof(int), true);
   dummy_int=data_timestamp;          dict_write_int(iter, KEY_TIMESTAMP, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Mode;   dict_write_int(iter, KEY_MODE, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Alarm;  dict_write_int(iter, KEY_ALARM, &dummy_int, sizeof(int), true);
-  dummy_int=settings.Sort;   dict_write_int(iter, KEY_SORT, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Mode;     dict_write_int(iter, KEY_MODE, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Alarm;    dict_write_int(iter, KEY_ALARM, &dummy_int, sizeof(int), true);
+  dummy_int=settings.Sort;     dict_write_int(iter, KEY_SORT, &dummy_int, sizeof(int), true);
+  #ifdef PBL_SDK_3
+  dummy_int=timeline_settings; dict_write_int(iter, KEY_TIMELINE, &dummy_int, sizeof(int), true);
+  #endif
   jobs_list_write_dict(iter, KEY_MEDICATIONS);
 
   if (export_after_save) {
@@ -76,11 +81,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *tuple_t;
   
   #ifdef PBL_SDK_3
-    if (waiting_for_pins && dict_find(iter, KEY_PINS_DONE)) {
+    if (dict_find(iter, KEY_PINS_DONE)) {
       waiting_for_pins=false;
-      if (quit_after_pins) {
-        main_menu_hide();
-      }
+      if (quit_after_pins) main_menu_hide();
       return;
     }
   #endif
@@ -96,6 +99,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     tuple_t=dict_find(iter, KEY_MODE);   if (tuple_t) settings.Mode = tuple_t->value->int32;
     tuple_t=dict_find(iter, KEY_ALARM); if (tuple_t) settings.Alarm = tuple_t->value->int8 > 0; // convert int to boolean
     tuple_t=dict_find(iter, KEY_SORT); if (tuple_t) settings.Sort = tuple_t->value->int8 > 0; // convert int to boolean
+    #ifdef PBL_SDK_3
+    tuple_t=dict_find(iter, KEY_TIMELINE);   if (tuple_t) timeline_settings = tuple_t->value->int32;
+    #endif
     jobs_delete_all_jobs();
     jobs_list_read_dict(iter, KEY_MEDICATIONS, stored_version);
 
@@ -137,6 +143,9 @@ void main_save_data(void) {
   persist_write_int(STORAGE_KEY_VERSION, CURRENT_STORAGE_VERSION);
   data_timestamp=time(NULL);
   persist_write_int(STORAGE_KEY_TIMESTAMP, data_timestamp);
+  #ifdef PBL_IF_SDK_3
+  persist_write_int(STORAGE_KEY_TIMELINE, timeline_settings);
+  #endif
   persist_write_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));
   if (settings.Sort) jobs_list_sort();
   jobs_list_save(STORAGE_KEY_FIRST_MED);
@@ -150,6 +159,9 @@ static void main_load_data(void) {
   if (stored_version) {
     data_loaded_from_watch = true;
     if (persist_exists(STORAGE_KEY_TIMESTAMP)) data_timestamp=persist_read_int(STORAGE_KEY_TIMESTAMP);
+    #ifdef PBL_IF_SDK_3
+    timeline_settings = persist_exists(STORAGE_KEY_TIMELINE) ? persist_read_int(STORAGE_KEY_TIMELINE) : (TIMELINE_FLAG_ON | TIMELINE_FLAG_NOTIFICATIONS);
+    #endif
     persist_read_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));
     jobs_list_load(STORAGE_KEY_FIRST_MED, stored_version);
     if (stored_version < CURRENT_STORAGE_VERSION)  {

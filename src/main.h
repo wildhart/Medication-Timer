@@ -65,6 +65,7 @@
 #define FONT_GOTHIC_14                fonts_get_system_font(FONT_KEY_GOTHIC_14)
 #define FONT_BITHAM_30_BLACK          fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK)
 #define FONT_BITHAM_34_MEDIUM_NUMBERS fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS)
+#define FONT_ROBOTO_21_CONDENSED      fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21)
 
 #define ICON_RECT_PLAY        (GRect) { {  0,  0 }, { 16, 16 } }
 #define ICON_RECT_PAUSE       (GRect) { { 16,  0 }, { 16, 16 } }
@@ -99,11 +100,13 @@ extern GBitmap *bitmap_tick;
 #define STORAGE_KEY_VERSION    1
 #define STORAGE_KEY_SETTINGS   2
 #define STORAGE_KEY_TIMESTAMP  3
+#define STORAGE_KEY_TIMELINE   4
 #define STORAGE_KEY_FIRST_MED  100
 
-#define CURRENT_STORAGE_VERSION 3
+#define CURRENT_STORAGE_VERSION 4
 //changes in storage version: 2 added bool Fixed to end of every Job struct
 //changes in storage version: 3 configuration
+//changes in storage version: 4 timeline
 
 typedef struct {
   uint8_t Mode;
@@ -124,6 +127,9 @@ enum {
 #ifdef PBL_SDK_3
   extern bool waiting_for_pins;
   extern bool quit_after_pins;
+  extern uint8_t timeline_settings;
+#define TIMELINE_FLAG_ON            1
+#define TIMELINE_FLAG_NOTIFICATIONS 2
 #endif
 
 void main_save_data(void);

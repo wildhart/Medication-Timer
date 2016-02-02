@@ -189,7 +189,6 @@ void jobs_rename_job(uint8_t index) {
 }
 
 void jobs_delete_all_jobs(void) {
-  Job_ptr* job_ptr = first_job_ptr;
   while (first_job_ptr) {
     Job_ptr * next_job=first_job_ptr->Next_ptr;
     free(first_job_ptr->Job);

@@ -24,7 +24,7 @@ static void initialise_ui(void) {
   
   // s_textlayer_features
   s_textlayer_features = text_layer_create(GRect(2, 27, 140, 125));
-  text_layer_set_text(s_textlayer_features, "* Next medicatins now appear on the timeline");
+  text_layer_set_text(s_textlayer_features, "* Medications now appear on the timeline");
   text_layer_set_font(s_textlayer_features, s_res_gothic_14);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_features);
 }

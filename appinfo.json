@@ -8,6 +8,7 @@
         "KEY_MODE": 1,
         "KEY_PINS_DONE": 8,
         "KEY_SORT": 3,
+        "KEY_TIMELINE": 9,
         "KEY_TIMESTAMP": 7,
         "KEY_VERSION": 4
     },

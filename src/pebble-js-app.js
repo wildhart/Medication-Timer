@@ -1,5 +1,8 @@
 // https://github.com/pebble-examples/slate-config-example/blob/master/src/js/pebble-js-app.js
 
+var TIMELINE_FLAG_ON            = 1;
+var TIMELINE_FLAG_NOTIFICATIONS = 2;
+
 Pebble.addEventListener('ready', function() {
   console.log('PebbleKit JS ready!');
   var settings=localStorage.getItem("settings");
@@ -21,7 +24,10 @@ Pebble.addEventListener("appmessage", function(e) {
   } else {
     localStorage.setItem("settings",JSON.stringify(e.payload));
   }
-  createAllPins(e.payload);
+  if (typeof(e.payload.KEY_TIMELINE)!="undefined") {
+    deleteAllPins();
+    if (e.payload.KEY_TIMELINE & TIMELINE_FLAG_ON) createAllPins(e.payload); else sendDict({KEY_PINS_DONE:1});
+  }
 });
 
 function sendDict(dict) {
@@ -49,6 +55,7 @@ function showConfiguration() {
     config+="&mode="+settings.KEY_MODE;
     config+="&alarm="+settings.KEY_ALARM;
     config+="&sort="+settings.KEY_SORT;
+    if (settings.KEY_TIMELINE) config+="&timeline="+settings.KEY_TIMELINE;
     
     var med=0;
     var setting;
@@ -77,12 +84,13 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   var dict = {};
   dict.KEY_CONFIG_DATA  = 1;
-  dict.KEY_MODE    = configData.mode;
+  dict.KEY_MODE    = configData.mode*1.0; // convert to integer
   dict.KEY_ALARM   = configData.alarm ? 1 : 0;  // Send a boolean as an integer
   dict.KEY_SORT    = configData.sort ? 1 : 0;   // Send a boolean as an integer
   dict.KEY_VERSION = configData.data_version;
   var d=new Date();
   dict.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 /*- d.getTimezoneOffset()*60 */);
+  if (typeof(configData.timeline)!="undefined") dict.KEY_TIMELINE=configData.timeline*1.0;
   
   var med=0;
   var data;
@@ -109,12 +117,34 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
 /****************************** Custom Timeline Stuff ************************/
 
+var pin_prefix="MedTimer-pin-";
+var requests_outstanding=0;
+  
+function deleteAllPins() {
+  // delete any old pins
+  var pin;
+  var last_pins=localStorage.getItem("pins");
+  var pin_old_now=localStorage.getItem("pin_now");
+  var med=0;
+  console.log("last pins: "+pin_old_now+"-"+last_pins);
+  while (med<last_pins) {
+    pin={id:pin_prefix+pin_old_now+"-"+med};
+    console.log("Deleting pin: "+pin.id);
+    requests_outstanding++;
+    deleteUserPin(pin, function(responseText) { 
+      console.log('deleteUserPin Result: ' + responseText);
+      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
+    });
+    med++;
+  }
+}
+
 function createAllPins(dict) {
   if (!dict) return;
-  var med=0;
+  var pin;
   var setting;  
-  var pin_prefix="MedTimer-pin-";
-  var requests_outstanding=0;
+  var pin_now=(new Date()).valueOf();
+  var med=0;
   while (setting=(med===0) ? dict.KEY_MEDICATIONS : dict[100+med]) {
     // get the time
     setting=setting.split("|");
@@ -124,24 +154,14 @@ function createAllPins(dict) {
     d.setMilliseconds(0);
     
     // configure the pin
-    var pin = {
-      "id": pin_prefix+med,
+    pin = {
+      "id": pin_prefix+pin_now+"-"+med,//pin_prefix+med,
       "time": d.toISOString(),
       "layout": {
         "type": "genericPin",
         "title": "Take "+setting[0],
         "tinyIcon": "system://images/NOTIFICATION_REMINDER"
       },
-      "reminders": [
-        {
-          "time": d.toISOString(),
-          "layout": {
-          "type": "genericReminder",
-            "tinyIcon": "system://images/NOTIFICATION_REMINDER",
-            "title": "Take "+setting[0]
-          }
-        }
-      ],
       "actions": [
         {
           "title": "Med Taken",
@@ -155,6 +175,18 @@ function createAllPins(dict) {
         }
       ],
     };
+    if (dict.KEY_TIMELINE & TIMELINE_FLAG_NOTIFICATIONS) {
+      pin.reminders=[
+        {
+          "time": d.toISOString(),
+          "layout": {
+          "type": "genericReminder",
+            "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+            "title": "Take "+setting[0]
+          }
+        }
+      ];
+    }
     
     // Push the pin
     console.log('Inserting pin in the future: ' + JSON.stringify(pin));
@@ -165,22 +197,9 @@ function createAllPins(dict) {
     });
     med++;
   }
-  
-  var last_pins=localStorage.getItem("pins");
-  console.log("remembering pins: "+med);
+  console.log("remembering pins: "+pin_now+"-"+med);
   localStorage.setItem("pins",med);
-  
-  // delete any additinal pins
-  while (med<last_pins) {
-    var pin={id:pin_prefix+med};
-    console.log("Deleting pin: "+pin.id);
-    requests_outstanding++;
-    deleteUserPin(pin, function(responseText) { 
-      console.log('deleteUserPin Result: ' + responseText);
-      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
-    });
-    med++;
-  }
+  localStorage.setItem("pin_now",pin_now);
 }
 
 
@@ -206,8 +225,7 @@ function timelineRequest(pin, type, topics, apiKey, callback) {
   // Create XHR
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
-    console.log('timeline: response received: ' + this.responseText);
-    console.log(pin.id+" "+url);
+    //console.log('timeline: response received: ' + this.responseText);
     callback(this.responseText);
   };
   xhr.onerror=function(error) {
@@ -239,7 +257,7 @@ function send(xhr,pin)  {
   xhr.setRequestHeader('X-User-Token', '' + usertoken);
   // Send
   xhr.send(JSON.stringify(pin));
-  console.log('timeline: request sent. ' + usertoken);
+  //console.log('timeline: request sent. ');
 }
 
 /**

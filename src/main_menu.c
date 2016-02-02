@@ -4,6 +4,7 @@ static Window *s_window;
 static MenuLayer *s_menulayer;
 #ifdef PBL_SDK_3
 static StatusBarLayer *s_status_bar;
+static TextLayer *s_textlayer_wait;
 #endif
 
 static bool check_phone_message = false;
@@ -15,6 +16,7 @@ static bool check_phone_message = false;
 void back_button_handler(ClickRecognizerRef recognizer, void *context) {
   if (waiting_for_pins) {
     quit_after_pins=true;
+    layer_set_hidden((Layer *)s_textlayer_wait,false);
   } else {
     main_menu_hide();
   }
@@ -50,11 +52,16 @@ static void initialise_ui(void) {
   s_menulayer = menu_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w, bounds.size.h-STATUS_BAR_LAYER_HEIGHT));
   menu_layer_set_click_config_onto_window(s_menulayer, s_window);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_menulayer);
-  #ifdef PBL_SDK_3
-    force_back_button(s_window,s_menulayer);
-  #endif
   
   #ifdef PBL_SDK_3
+  force_back_button(s_window,s_menulayer);
+  // s_textlayer_wait
+  s_textlayer_wait = text_layer_create(GRect(14, (bounds.size.h-5*26)/2, bounds.size.w-2*14, 5*26));
+  text_layer_set_text(s_textlayer_wait, "\nUpdating timeline before closing...");
+  text_layer_set_text_alignment(s_textlayer_wait, GTextAlignmentCenter);
+  text_layer_set_font(s_textlayer_wait, FONT_ROBOTO_21_CONDENSED);
+  layer_set_hidden((Layer *)s_textlayer_wait,true);
+  layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_wait);
   // Set up the status bar last to ensure it is on top of other Layers
   s_status_bar = status_bar_layer_create();
   layer_add_child(window_get_root_layer(s_window), status_bar_layer_get_layer(s_status_bar));
@@ -67,6 +74,7 @@ static void destroy_ui(void) {
   
   #ifdef PBL_SDK_3
   status_bar_layer_destroy(s_status_bar);
+  text_layer_destroy(s_textlayer_wait);
   #endif
 }
 
@@ -96,8 +104,12 @@ enum { // main menu structure
   MENU_SETTINGS_MODE=MENU_SECTION_SETTINGS*100,
   MENU_SETTINGS_ALARM,
   MENU_SETTINGS_SORT,
+  #ifdef PBL_SDK_3
+  MENU_SETTINGS_TIMELINE,
+  MENU_SETTINGS_TL_NOTIFICATIONS,
+  #endif
   MENU_SETTINGS_CONFIG,
-  NUM_MENU_ITEMS_SETTINGS=4
+  NUM_MENU_ITEMS_SETTINGS=PBL_IF_SDK_3_ELSE(6, 4)
 };
 
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
@@ -189,8 +201,10 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
         case MENU_SETTINGS_MODE:
           menu_cell_draw_setting(ctx, cell_layer, "Mode", mode[settings.Mode],NULL);
           break;
-        case MENU_SETTINGS_ALARM: menu_cell_draw_setting(ctx, cell_layer, "Alarm", settings.Alarm ? "YES" : "NO",NULL); break;
+        case MENU_SETTINGS_ALARM: menu_cell_draw_setting(ctx, cell_layer, "Alarm", settings.Alarm ? "ON" : "OFF",NULL); break;
         case MENU_SETTINGS_SORT: menu_cell_draw_setting(ctx, cell_layer, "Sort", settings.Sort ? "YES" : "NO",NULL); break;
+        case MENU_SETTINGS_TIMELINE: menu_cell_draw_setting(ctx, cell_layer, "Timeline", timeline_settings&TIMELINE_FLAG_ON ? "ON" : "OFF",NULL); break;
+        case MENU_SETTINGS_TL_NOTIFICATIONS: menu_cell_draw_setting(ctx, cell_layer, "..Notifications", timeline_settings&TIMELINE_FLAG_NOTIFICATIONS ? "ON" : "OFF",NULL); break;
         case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, check_phone_message ? "Check phone..." : "Config/Donate", NULL , bitmap_settings); break;
       }
   }
@@ -221,6 +235,16 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
           break;
         case MENU_SETTINGS_SORT: 
           settings.Sort = !settings.Sort;
+          main_save_data();
+          menu_layer_reload_data(s_menulayer);
+          break;
+        case MENU_SETTINGS_TIMELINE:
+          timeline_settings^=TIMELINE_FLAG_ON ; // ^ = XOR
+          main_save_data();
+          menu_layer_reload_data(s_menulayer);
+          break;
+        case MENU_SETTINGS_TL_NOTIFICATIONS: 
+          timeline_settings^=TIMELINE_FLAG_NOTIFICATIONS ; // ^ = XOR
           main_save_data();
           menu_layer_reload_data(s_menulayer);
           break;
