@@ -3,11 +3,10 @@
 Pebble.addEventListener('ready', function() {
   console.log('PebbleKit JS ready!');
   var settings=localStorage.getItem("settings");
-  //settings='{"101":"Ibuprofen|1454302849|6|1","102":"Tremadol|1454306400|8|1","103":"Omeprazole|1454265012|24|1","KEY_APP_VERSION":"1.4","KEY_SORT":1,"KEY_MEDICATIONS":"Paracetamol|1454292053|6|1","KEY_VERSION":3,"KEY_MODE":2,"KEY_TIMESTAMP":1454311036,"KEY_ALARM":0}';
-  //settings='{"KEY_MEDICATIONS":"Paracetamol|1454292053|6|1","101":"Ibuprofen|1454302849|6|1","102":"Tremadol|1454306400|8|1","103":"Omeprazole|1454265012|24|1","KEY_APP_VERSION":"1.4","KEY_SORT":1,"KEY_VERSION":3,"KEY_MODE":2,"KEY_TIMESTAMP":1454311036,"KEY_ALARM":0}';
+  //settings='{"101":"Tremadol|1454364000|8|1","102":"Paracetamol|1454378453|6|1","103":"Omeprazole|1454351412|24|1","KEY_APP_VERSION":"1.4","KEY_SORT":1,"KEY_MEDICATIONS":"Ibuprofen|1454367649|6|1","KEY_VERSION":3,"KEY_MODE":2,"KEY_TIMESTAMP":1454380831,"KEY_ALARM":1}';
   var dict=settings ? JSON.parse(settings) : {};
   if (!dict.KEY_TIMESTAMP) {
-    var d=new Date();$
+    var d=new Date();
     dict.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 - d.getTimezoneOffset()*60);
   }
   sendDict(dict);
@@ -22,7 +21,7 @@ Pebble.addEventListener("appmessage", function(e) {
   } else {
     localStorage.setItem("settings",JSON.stringify(e.payload));
   }
-  createAllPins(e.payload,0);
+  createAllPins(e.payload);
 });
 
 function sendDict(dict) {
@@ -110,103 +109,78 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
 /****************************** Custom Timeline Stuff ************************/
 
-// Pin template
-var pin = {
-//  "id": "example-pin-0",
-//  "time": date.toISOString(),
-  "layout": {
-    "type": "genericPin",
-//    "title": "Take Ibuprofen",
-    "tinyIcon": "system://images/NOTIFICATION_REMINDER"
-  },
-  "reminders": [
-    {
-//      "time": date.toISOString(),
-      "layout": {
-      "type": "genericReminder",
-        "tinyIcon": "system://images/NOTIFICATION_REMINDER",
-//        "title": "Take Ibuprofen"
-      }
-    }
-  ],
-  "actions": [
-    {
-      "title": "Med Taken",
-      "type": "openWatchApp",
-      "launchCode": 10 /*+med number*/
-    },
-    {
-      "title": "Open Meds Timer",
-      "type": "openWatchApp",
-      "launchCode": 0
-    }
-  ],
-};
-
-var last_pin=0;
-var total_pins=0;
-var last_total_pins=0;
-var dict_copy=null;
-var pin_prefix="MedTimer-pin-";
-
-function pinInsertedCallback(responseText) { 
-  console.log('insertUserPin Result: ' + responseText);
-  createAllPins(dict_copy,last_pin+1);
-}
-
-function createAllPins(dict,next_pin) {
+function createAllPins(dict) {
   if (!dict) return;
-  dict_copy=dict;
-  if (next_pin===0) {
-    last_total_pins=localStorage.getItem("pins")*1.0;
-    last_total_pins=8;
-    total_pins=0;
-  }
-  last_pin=next_pin;
-  var setting;
-  setting=(last_pin===0) ? dict.KEY_MEDICATIONS : dict[100+last_pin];
-  if (setting) {
+  var med=0;
+  var setting;  
+  var pin_prefix="MedTimer-pin-";
+  var requests_outstanding=0;
+  while (setting=(med===0) ? dict.KEY_MEDICATIONS : dict[100+med]) {
     // get the time
     setting=setting.split("|");
     var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
     d.setUTCSeconds(setting[1]*1.0 +setting[2]*3600); // setting[1] = last time, setting[2] = repeat_hrs
     d.setSeconds(0);
     d.setMilliseconds(0);
-    //var secs=d.getSeconds();
-    /*d.setUTCSeconds(d.getTimezoneOffset()*60); // this sets seconds to zero */
-    //setting[1]=padZero(d.getHours())+":"+padZero(d.getMinutes());
-    //setting.push(secs);
     
     // configure the pin
-    pin.id=pin_prefix+last_pin;
-    pin.time=pin.reminders[0].time=d.toISOString();
-    pin.layout.title=pin.reminders[0].layout.title="Take "+setting[0];
-    pin.actions[0].launchCode=10+last_pin;
-    total_pins++;
+    var pin = {
+      "id": pin_prefix+med,
+      "time": d.toISOString(),
+      "layout": {
+        "type": "genericPin",
+        "title": "Take "+setting[0],
+        "tinyIcon": "system://images/NOTIFICATION_REMINDER"
+      },
+      "reminders": [
+        {
+          "time": d.toISOString(),
+          "layout": {
+          "type": "genericReminder",
+            "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+            "title": "Take "+setting[0]
+          }
+        }
+      ],
+      "actions": [
+        {
+          "title": "Med Taken",
+          "type": "openWatchApp",
+          "launchCode": 10+med
+        },
+        {
+          "title": "Open Meds Timer",
+          "type": "openWatchApp",
+          "launchCode": 0
+        }
+      ],
+    };
+    
     // Push the pin
     console.log('Inserting pin in the future: ' + JSON.stringify(pin));
-    insertUserPin(pin, pinInsertedCallback);
-  } else {
-    // no more meds to send
-    localStorage.setItem("pins",total_pins);
-    console.log("remembering pins: "+total_pins);
-    // delete any old pins
-    deleteAllPins(last_pin);
+    requests_outstanding++;
+    insertUserPin(pin, function(responseText) { 
+      console.log('insertUserPin Result: ' + responseText);
+      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
+    });
+    med++;
   }
-}
-
-function pinDeletedCallback(responseText) { 
-  console.log('deleteUserPin Result: ' + responseText);
-  deleteAllPins(last_pin+1);
-} 
-
-function deleteAllPins(next_pin) {
-  last_pin=next_pin;
-  if (last_pin<last_total_pins) {
-    console.log("Deleting pin: "+pin_prefix+last_pin);
-    deleteUserPin(pin_prefix+last_pin, pinDeletedCallback);
-  } else {
-    sendDict({KEY_PINS_DONE:1});
+  
+  var last_pins=localStorage.getItem("pins");
+  last_pins=6;
+  console.log("remembering pins: "+med);
+  localStorage.setItem("pins",med);
+  
+  // delete any additinal pins
+  while (med<last_pins) {
+    var pin={id:pin_prefix+med};
+    console.log("Deleting pin: "+pin.id);
+    requests_outstanding++;
+    deleteUserPin(pin, function(responseText) { 
+      console.log('deleteUserPin Result: ' + responseText);
+      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
+    });
+    med++;
   }
 }
 
@@ -234,6 +208,7 @@ function timelineRequest(pin, type, topics, apiKey, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
     console.log('timeline: response received: ' + this.responseText);
+    console.log(pin.id+" "+url);
     callback(this.responseText);
   };
   xhr.onerror=function(error) {
