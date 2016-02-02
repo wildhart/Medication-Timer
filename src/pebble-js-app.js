@@ -167,7 +167,6 @@ function createAllPins(dict) {
   }
   
   var last_pins=localStorage.getItem("pins");
-  last_pins=6;
   console.log("remembering pins: "+med);
   localStorage.setItem("pins",med);
   
