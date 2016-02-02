@@ -36,7 +36,7 @@
     "sdkVersion": "3",
     "shortName": "Meds Timer",
     "targetPlatforms": [
-        "aplite"
+        "basalt"
     ],
     "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
     "versionLabel": "1.4",

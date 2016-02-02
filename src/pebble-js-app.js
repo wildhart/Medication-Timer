@@ -26,7 +26,8 @@ Pebble.addEventListener("appmessage", function(e) {
   }
   if (typeof(e.payload.KEY_TIMELINE)!="undefined") {
     deleteAllPins();
-    if (e.payload.KEY_TIMELINE & TIMELINE_FLAG_ON) createAllPins(e.payload); else sendDict({KEY_PINS_DONE:1});
+    if (e.payload.KEY_TIMELINE & TIMELINE_FLAG_ON) createAllPins(e.payload);
+    if (requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
   }
 });
 

@@ -143,7 +143,7 @@ void main_save_data(void) {
   persist_write_int(STORAGE_KEY_VERSION, CURRENT_STORAGE_VERSION);
   data_timestamp=time(NULL);
   persist_write_int(STORAGE_KEY_TIMESTAMP, data_timestamp);
-  #ifdef PBL_IF_SDK_3
+  #ifdef PBL_SDK_3
   persist_write_int(STORAGE_KEY_TIMELINE, timeline_settings);
   #endif
   persist_write_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));
@@ -159,7 +159,7 @@ static void main_load_data(void) {
   if (stored_version) {
     data_loaded_from_watch = true;
     if (persist_exists(STORAGE_KEY_TIMESTAMP)) data_timestamp=persist_read_int(STORAGE_KEY_TIMESTAMP);
-    #ifdef PBL_IF_SDK_3
+    #ifdef PBL_SDK_3
     timeline_settings = persist_exists(STORAGE_KEY_TIMELINE) ? persist_read_int(STORAGE_KEY_TIMELINE) : (TIMELINE_FLAG_ON | TIMELINE_FLAG_NOTIFICATIONS);
     #endif
     persist_read_data(STORAGE_KEY_SETTINGS, &settings, sizeof(Settings));

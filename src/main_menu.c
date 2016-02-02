@@ -45,8 +45,8 @@ static void initialise_ui(void) {
   #ifndef PBL_SDK_3
     window_set_fullscreen(s_window, false);
   #endif
-  
   GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
+  uint8_t margin=(bounds.size.w-144)/2;
   
   // s_menulayer
   s_menulayer = menu_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w, bounds.size.h-STATUS_BAR_LAYER_HEIGHT));
@@ -56,7 +56,9 @@ static void initialise_ui(void) {
   #ifdef PBL_SDK_3
   force_back_button(s_window,s_menulayer);
   // s_textlayer_wait
-  s_textlayer_wait = text_layer_create(GRect(14, (bounds.size.h-5*26)/2, bounds.size.w-2*14, 5*26));
+  s_textlayer_wait = text_layer_create(GRect(14+margin, (bounds.size.h-5*26)/2, bounds.size.w-2*(14+margin), 5*26));
+  text_layer_set_background_color(s_textlayer_wait,GColorBlack);
+  text_layer_set_text_color(s_textlayer_wait,GColorWhite);
   text_layer_set_text(s_textlayer_wait, "\nUpdating timeline before closing...");
   text_layer_set_text_alignment(s_textlayer_wait, GTextAlignmentCenter);
   text_layer_set_font(s_textlayer_wait, FONT_ROBOTO_21_CONDENSED);
@@ -137,7 +139,7 @@ static void menu_draw_header_callback(GContext* ctx, const Layer *cell_layer, ui
     case MENU_SECTION_JOBS:
     case MENU_SECTION_OTHER:
       break;
-    case MENU_SECTION_SETTINGS:  menu_cell_basic_header_draw(ctx, cell_layer, "Options"); break;
+    case MENU_SECTION_SETTINGS:  menu_cell_basic_header_draw(ctx, cell_layer, PBL_IF_ROUND_ELSE("      Options","Options")); break;
   }
 }
 
@@ -155,10 +157,11 @@ void menu_cell_draw_job(GContext* ctx, const Layer *cell_layer, const uint8_t in
   #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
   #endif
+  uint8_t margin=(bounds.size.w-144)/2;
   
-  graphics_draw_text(ctx, jobs_get_job_name(index), FONT_GOTHIC_24_BOLD, GRect(4, -4, bounds.size.w-8, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, jobs_get_job_clock_as_text(index), FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentRight, NULL);
-  graphics_draw_text(ctx, jobs_get_job_repeat_as_text(index), FONT_GOTHIC_14, GRect(4, 20+4, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, jobs_get_job_name(index), FONT_GOTHIC_24_BOLD, GRect(4+margin, -4, bounds.size.w-2*(4+margin), 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, jobs_get_job_clock_as_text(index), FONT_GOTHIC_18, GRect(4+margin, 20, bounds.size.w-2*(4+margin), 14), GTextOverflowModeFill, GTextAlignmentRight, NULL);
+  graphics_draw_text(ctx, jobs_get_job_repeat_as_text(index), FONT_GOTHIC_14, GRect(4+margin, 20+4, bounds.size.w-2*(4+margin), 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
 
   //graphics_draw_bitmap_in_rect(ctx, timer.Active && timer.Job==index ? bitmap_play : bitmap_pause, GRect(6, (bounds.size.h-16)/2, 16, 16));
 }
@@ -169,11 +172,12 @@ void menu_cell_draw_other(GContext* ctx, const Layer *cell_layer, const char *ti
   #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
   #endif
+  uint8_t margin=(bounds.size.w-144)/2;
   
-  graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(28, -4, bounds.size.w-28, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
-  if (sub_title) graphics_draw_text(ctx, sub_title, FONT_GOTHIC_18, GRect(28, 20, bounds.size.w-28-4, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(28+margin, -4, bounds.size.w-28-2*margin, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  if (sub_title) graphics_draw_text(ctx, sub_title, FONT_GOTHIC_18, GRect(28+margin, 20, bounds.size.w-28-margin-4, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
 
-  if (icon) graphics_draw_bitmap_in_rect(ctx, icon, GRect(6,(bounds.size.h-16)/2, 16, 16));
+  if (icon) graphics_draw_bitmap_in_rect(ctx, icon, GRect(6+margin,(bounds.size.h-16)/2, 16, 16));
 }
 
 static void menu_cell_draw_setting(GContext* ctx, const Layer *cell_layer, const char *title, const char *setting, const char *hint) {
@@ -182,10 +186,11 @@ static void menu_cell_draw_setting(GContext* ctx, const Layer *cell_layer, const
   #ifndef PBL_SDK_3
   graphics_context_set_text_color(ctx, GColorBlack);
   #endif
+  uint8_t margin=(bounds.size.w-144)/2;
   
-  graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(4, -4, bounds.size.w-8, 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, setting, FONT_GOTHIC_18_BOLD, GRect(4, 2, bounds.size.w-8, 18), GTextOverflowModeFill, GTextAlignmentRight, NULL);
-  graphics_draw_text(ctx, hint, FONT_GOTHIC_18, GRect(4, 20, bounds.size.w-8, 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, title, FONT_GOTHIC_24_BOLD, GRect(4+margin, -4, bounds.size.w-2*(4+margin), 4+18), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, setting, FONT_GOTHIC_18_BOLD, GRect(4+margin, 2, bounds.size.w-2*(4+margin), 18), GTextOverflowModeFill, GTextAlignmentRight, NULL);
+  graphics_draw_text(ctx, hint, FONT_GOTHIC_18, GRect(4+margin, 20, bounds.size.w-2*(4+margin), 14), GTextOverflowModeFill, GTextAlignmentLeft, NULL);
 }
 
 static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
@@ -203,9 +208,11 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
           break;
         case MENU_SETTINGS_ALARM: menu_cell_draw_setting(ctx, cell_layer, "Alarm", settings.Alarm ? "ON" : "OFF",NULL); break;
         case MENU_SETTINGS_SORT: menu_cell_draw_setting(ctx, cell_layer, "Sort", settings.Sort ? "YES" : "NO",NULL); break;
+        case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, check_phone_message ? "Check phone..." : "Config/Donate", NULL , bitmap_settings); break;
+        #ifdef PBL_SDK_3
         case MENU_SETTINGS_TIMELINE: menu_cell_draw_setting(ctx, cell_layer, "Timeline", timeline_settings&TIMELINE_FLAG_ON ? "ON" : "OFF",NULL); break;
         case MENU_SETTINGS_TL_NOTIFICATIONS: menu_cell_draw_setting(ctx, cell_layer, "..Notifications", timeline_settings&TIMELINE_FLAG_NOTIFICATIONS ? "ON" : "OFF",NULL); break;
-        case MENU_SETTINGS_CONFIG: menu_cell_draw_other(ctx, cell_layer, check_phone_message ? "Check phone..." : "Config/Donate", NULL , bitmap_settings); break;
+        #endif
       }
   }
 }
@@ -238,6 +245,14 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
           main_save_data();
           menu_layer_reload_data(s_menulayer);
           break;
+        case MENU_SETTINGS_CONFIG:
+          export_after_save=true;
+          main_save_data();
+          check_phone_message=true;
+          menu_layer_reload_data(s_menulayer);
+          app_timer_register(2000 /* milliseconds */, timer_callback, NULL);
+          break;
+        #ifdef PBL_SDK_3
         case MENU_SETTINGS_TIMELINE:
           timeline_settings^=TIMELINE_FLAG_ON ; // ^ = XOR
           main_save_data();
@@ -248,13 +263,7 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
           main_save_data();
           menu_layer_reload_data(s_menulayer);
           break;
-        case MENU_SETTINGS_CONFIG:
-          export_after_save=true;
-          main_save_data();
-          check_phone_message=true;
-          menu_layer_reload_data(s_menulayer);
-          app_timer_register(2000 /* milliseconds */, timer_callback, NULL);
-          break;
+        #endif
       }
   }
 }

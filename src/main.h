@@ -59,6 +59,7 @@
 #define END_TIME(JOB) ((time_t) (JOB)->Seconds + (time_t) (JOB)->Repeat_hrs*3600)
 
 #define FONT_GOTHIC_24_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD)
+#define FONT_GOTHIC_28_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD)
 #define FONT_GOTHIC_18_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
 #define FONT_GOTHIC_14_BOLD           fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD)
 #define FONT_GOTHIC_18                fonts_get_system_font(FONT_KEY_GOTHIC_18)
