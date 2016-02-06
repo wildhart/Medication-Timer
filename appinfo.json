@@ -6,9 +6,8 @@
         "KEY_EXPORT": 6,
         "KEY_MEDICATIONS": 100,
         "KEY_MODE": 1,
-        "KEY_PINS_DONE": 8,
         "KEY_SORT": 3,
-        "KEY_TIMELINE": 9,
+        "KEY_TIMELINE": 8,
         "KEY_TIMESTAMP": 7,
         "KEY_VERSION": 4
     },
@@ -16,10 +15,17 @@
         "configurable"
     ],
     "companyName": "cmorison@gmail.com",
+    "enableMultiJS": false,
     "longName": "Medication Timer",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/icons-inv.png",
+                "name": "IMAGE_ICON_MATRIX_INV",
+                "targetPlatforms": null,
+                "type": "png"
+            },
             {
                 "file": "images/menu_icon.png",
                 "menuIcon": true,
@@ -36,10 +42,12 @@
     "sdkVersion": "3",
     "shortName": "Meds Timer",
     "targetPlatforms": [
-        "basalt"
+        "aplite",
+        "basalt",
+        "chalk"
     ],
     "uuid": "95d07e1a-2451-4ffa-aa44-836e523a7648",
-    "versionLabel": "1.4",
+    "versionLabel": "1.6",
     "watchapp": {
         "watchface": false
     }

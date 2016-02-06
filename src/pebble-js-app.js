@@ -1,18 +1,20 @@
-// https://github.com/pebble-examples/slate-config-example/blob/master/src/js/pebble-js-app.js
-
 var TIMELINE_FLAG_ON            = 1;
 var TIMELINE_FLAG_NOTIFICATIONS = 2;
 
 Pebble.addEventListener('ready', function() {
   console.log('PebbleKit JS ready!');
   var settings=localStorage.getItem("settings");
-  //settings='{"101":"Tremadol|1454364000|8|1","102":"Paracetamol|1454378453|6|1","103":"Omeprazole|1454351412|24|1","KEY_APP_VERSION":"1.4","KEY_SORT":1,"KEY_MEDICATIONS":"Ibuprofen|1454367649|6|1","KEY_VERSION":3,"KEY_MODE":2,"KEY_TIMESTAMP":1454380831,"KEY_ALARM":1}';
-  var dict=settings ? JSON.parse(settings) : {};
-  if (!dict.KEY_TIMESTAMP) {
+  //settings='{"101":"Ibuprofen|1454731249|6|1","102":"Tremadol|1454738400|8|1","103":"Omeprazole|1454697012|24|1","KEY_TIMELINE":0,"KEY_APP_VERSION":"1.5","KEY_SORT":1,"KEY_MEDICATIONS":"Paracetamol|1454720453|6|1","KEY_VERSION":4,"KEY_MODE":2,"KEY_TIMESTAMP":1454739389,"KEY_ALARM":0}';
+  settings=settings ? JSON.parse(settings) : {};
+  if (!settings.KEY_TIMESTAMP) {
     var d=new Date();
-    dict.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 - d.getTimezoneOffset()*60);
+    settings.KEY_TIMESTAMP = Math.floor(d.getTime()/1000 - d.getTimezoneOffset()*60);
   }
-  sendDict(dict);
+  sendDict(settings);
+  if (localStorage.getItem("old_pins")) {
+    deleteAllPins();
+    if (settings.KEY_TIMELINE & TIMELINE_FLAG_ON) createAllPins(settings);
+  }
 });
 
 Pebble.addEventListener("appmessage", function(e) {
@@ -27,7 +29,6 @@ Pebble.addEventListener("appmessage", function(e) {
   if (typeof(e.payload.KEY_TIMELINE)!="undefined") {
     deleteAllPins();
     if (e.payload.KEY_TIMELINE & TIMELINE_FLAG_ON) createAllPins(e.payload);
-    if (requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
   }
 });
 
@@ -119,33 +120,58 @@ Pebble.addEventListener('webviewclosed', function(e) {
 /****************************** Custom Timeline Stuff ************************/
 
 var pin_prefix="MedTimer-pin-";
-var requests_outstanding=0;
   
 function deleteAllPins() {
   // delete any old pins
   var pin;
-  var last_pins=localStorage.getItem("pins");
-  var pin_old_now=localStorage.getItem("pin_now");
-  var med=0;
-  console.log("last pins: "+pin_old_now+"-"+last_pins);
-  while (med<last_pins) {
-    pin={id:pin_prefix+pin_old_now+"-"+med};
+  
+  var pins=JSON.parse(localStorage.getItem("pins")) || [];
+  var old_pins=JSON.parse(localStorage.getItem("old_pins")) || [];
+  
+  old_pins=old_pins.concat(pins);
+  localStorage.removeItem("pins");
+  localStorage.setItem("old_pins",JSON.stringify(old_pins));
+  
+  console.log("old pins: "+JSON.stringify(old_pins));
+  
+  for (var med=0; med<old_pins.length; med++) {
+    pin={id:pin_prefix+old_pins[med]};
     console.log("Deleting pin: "+pin.id);
-    requests_outstanding++;
-    deleteUserPin(pin, function(responseText) { 
-      console.log('deleteUserPin Result: ' + responseText);
-      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
+    deleteUserPin(pin, function(responseText, id) { 
+      //console.log('deleteUserPin Result: ' + responseText+" "+id);
+      var old_pins=JSON.parse(localStorage.getItem("old_pins")) || [];  
+      var index=old_pins.indexOf(id.replace(pin_prefix,""));
+      if (index > -1) old_pins.splice(index, 1);
+      if (old_pins.length) {
+        localStorage.setItem("old_pins",JSON.stringify(old_pins));
+      } else {
+        localStorage.removeItem("old_pins");
+      }
+      console.log("remaining old pins: "+JSON.stringify(old_pins));
     });
-    med++;
   }
 }
 
 function createAllPins(dict) {
   if (!dict) return;
   var pin;
+  var med;
   var setting;  
-  var pin_now=(new Date()).valueOf();
-  var med=0;
+  var pin_now=(new Date()).valueOf()+"-";
+  var pins=JSON.parse(localStorage.getItem("pins")) || [];
+  
+  // get list of med names and sort them alphabetically.
+  var new_pins=[];
+  med=0;
+  while (setting=(med===0) ? dict.KEY_MEDICATIONS : dict[100+med]) {
+    setting=setting.split("|");
+    new_pins.push(setting[0]);  // med name
+    med++;
+  }
+  new_pins.sort();
+  
+  // create and send pins
+  med=0;
   while (setting=(med===0) ? dict.KEY_MEDICATIONS : dict[100+med]) {
     // get the time
     setting=setting.split("|");
@@ -156,7 +182,7 @@ function createAllPins(dict) {
     
     // configure the pin
     pin = {
-      "id": pin_prefix+pin_now+"-"+med,//pin_prefix+med,
+      "id": pin_prefix+pin_now+med,//pin_prefix+med,
       "time": d.toISOString(),
       "layout": {
         "type": "genericPin",
@@ -167,7 +193,7 @@ function createAllPins(dict) {
         {
           "title": "Med Taken",
           "type": "openWatchApp",
-          "launchCode": 10+med
+          "launchCode": 10+new_pins.indexOf(setting[0])
         },
         {
           "title": "Open Meds Timer",
@@ -188,19 +214,17 @@ function createAllPins(dict) {
         }
       ];
     }
-    
+    // remember pin, to be deleted later
+    pins.push(pin_now+med);
     // Push the pin
     console.log('Inserting pin in the future: ' + JSON.stringify(pin));
-    requests_outstanding++;
-    insertUserPin(pin, function(responseText) { 
-      console.log('insertUserPin Result: ' + responseText);
-      if (--requests_outstanding===0) sendDict({KEY_PINS_DONE:1});
+    insertUserPin(pin, function(responseText, id) { 
+      //console.log('insertUserPin Result: ' + responseText+" "+id);
     });
     med++;
   }
-  console.log("remembering pins: "+pin_now+"-"+med);
-  localStorage.setItem("pins",med);
-  localStorage.setItem("pin_now",pin_now);
+  console.log("remembering pins: "+JSON.stringify(pins));
+  localStorage.setItem("pins",JSON.stringify(pins));
 }
 
 
@@ -227,7 +251,7 @@ function timelineRequest(pin, type, topics, apiKey, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
     //console.log('timeline: response received: ' + this.responseText);
-    callback(this.responseText);
+    callback(this.responseText, pin.id);
   };
   xhr.onerror=function(error) {
     console.log('timeline: error: ' +JSON.stringify(error));

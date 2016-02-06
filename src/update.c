@@ -36,7 +36,7 @@ static void initialise_ui(void) {
   
   // s_textlayer_features
   s_textlayer_features = text_layer_create(GRect(2+MARGIN, HEIGHT+MARGIN, bounds.size.w-2*(2+MARGIN), bounds.size.h-HEIGHT-MARGIN));
-  text_layer_set_text(s_textlayer_features, "* Medications now appear on the timeline\n\n* Optimised for Pebble Time Round");
+  text_layer_set_text(s_textlayer_features, "* Medications now appear on the timeline\n\n* Improved for Pebble Time Round");
   text_layer_set_font(s_textlayer_features, FONT_GOTHIC_18);
   #ifdef PBL_ROUND
   text_layer_set_text_alignment(s_textlayer_features, GTextAlignmentCenter);

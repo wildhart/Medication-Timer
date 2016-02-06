@@ -67,12 +67,12 @@ static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *c
 static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
   switch (cell_index->row) {
     case MENU_JOB: menu_cell_draw_job(ctx, cell_layer, job_index); break;
-    case MENU_RESET: menu_cell_draw_other(ctx, cell_layer, "Reset Timer", NULL, bitmap_reset); break;
-    case MENU_ADD10: menu_cell_draw_other(ctx, cell_layer, "Add 10 Minutes", NULL, bitmap_add); break;
-    case MENU_SUB10: menu_cell_draw_other(ctx, cell_layer, "Sub 10 Minutes", NULL, bitmap_minus); break;
-    case MENU_RENAME: menu_cell_draw_other(ctx, cell_layer, "Rename", NULL, bitmap_edit); break;
-    case MENU_ADJUST: menu_cell_draw_other(ctx, cell_layer, "Set Repeat", NULL, bitmap_adjust); break;
-    case MENU_DELETE: menu_cell_draw_other(ctx, cell_layer, "Delete", NULL, bitmap_delete); break;
+    case MENU_RESET: menu_cell_draw_other(ctx, cell_layer, "Reset Timer", NULL, bitmaps[BITMAP_RESET]); break;
+    case MENU_ADD10: menu_cell_draw_other(ctx, cell_layer, "Add 10 Minutes", NULL, bitmaps[BITMAP_ADD]); break;
+    case MENU_SUB10: menu_cell_draw_other(ctx, cell_layer, "Sub 10 Minutes", NULL, bitmaps[BITMAP_MINUS]); break;
+    case MENU_RENAME: menu_cell_draw_other(ctx, cell_layer, "Rename", NULL, bitmaps[BITMAP_EDIT]); break;
+    case MENU_ADJUST: menu_cell_draw_other(ctx, cell_layer, "Set Repeat", NULL, bitmaps[BITMAP_ADJUST]); break;
+    case MENU_DELETE: menu_cell_draw_other(ctx, cell_layer, "Delete", NULL, bitmaps[BITMAP_DELETE]); break;
   }
 }
 
